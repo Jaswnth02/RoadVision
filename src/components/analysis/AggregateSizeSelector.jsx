@@ -20,7 +20,7 @@ export default function AggregateSizeSelector({
         </span>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
         {AGGREGATE_SIZES.map((item) => {
           const isSelected =
             selectedSize?.toLowerCase().includes(item.code.toLowerCase()) ||
@@ -29,9 +29,9 @@ export default function AggregateSizeSelector({
           return (
             <div
               key={item.id}
-              onClick={() => interactive && onSelectSize && onSelectSize(item.code)}
+              onClick={() => interactive && onSelectSize && onSelectSize(item.code, item)}
               className={`p-3 rounded-xl border transition-all duration-150 ${
-                interactive ? 'cursor-pointer' : ''
+                interactive ? 'cursor-pointer hover:border-primary/50 hover:shadow-soft-sm active:scale-[0.98]' : ''
               } ${
                 isSelected
                   ? 'bg-primary-light/60 border-primary/40 shadow-soft-sm ring-1 ring-primary/30'

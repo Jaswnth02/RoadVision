@@ -9,7 +9,11 @@ import {
   ChevronRight,
   Shield,
   X,
+  LogOut,
+  User,
+  ChevronDown,
 } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 import Button from '../ui/Button';
 
 const ROUTE_INFO = {
@@ -25,7 +29,14 @@ const ROUTE_INFO = {
 export default function Header({ onOpenMobile }) {
   const location = useLocation();
   const navigate = useNavigate();
+  const { user, logout } = useAuth();
   const [showNotifications, setShowNotifications] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
 
   const currentInfo = ROUTE_INFO[location.pathname] || {
     title: 'RoadVision AI',
@@ -150,19 +161,52 @@ export default function Header({ onOpenMobile }) {
           )}
         </div>
 
-        {/* Quality Inspector Avatar Badge */}
-        <div className="flex items-center gap-2 pl-2 border-l border-surface-border">
-          <div className="w-8 h-8 rounded-full bg-primary/15 border border-primary/30 flex items-center justify-center text-xs font-bold text-primary">
-            QA
-          </div>
-          <div className="hidden lg:block text-left">
-            <span className="text-xs font-semibold text-charcoal block leading-none">
-              QC Engineer
-            </span>
-            <span className="text-[10px] text-charcoal-light leading-none">
-              Site Lab #1
-            </span>
-          </div>
+        {/* Quality Inspector Avatar & Session Dropdown */}
+        <div className="relative pl-2 border-l border-surface-border">
+          <button
+            type="button"
+            onClick={() => setShowUserMenu(!showUserMenu)}
+            className="flex items-center gap-2 p-1.5 rounded-xl hover:bg-surface-muted transition-colors text-left focus:outline-none"
+            aria-label="User profile menu"
+          >
+            <div className="w-8 h-8 rounded-full bg-primary/15 border border-primary/30 flex items-center justify-center text-xs font-bold text-primary flex-shrink-0">
+              {user?.initials || 'QA'}
+            </div>
+            <div className="hidden lg:block text-left">
+              <span className="text-xs font-semibold text-charcoal block leading-none truncate max-w-[130px]">
+                {user?.name || 'Er. R. Sharma'}
+              </span>
+              <span className="text-[10px] text-charcoal-light leading-none block mt-0.5 truncate max-w-[130px]">
+                {user?.role || 'Senior QA/QC'}
+              </span>
+            </div>
+            <ChevronDown className="w-3.5 h-3.5 text-gray-400 hidden lg:block" />
+          </button>
+
+          {showUserMenu && (
+            <div className="absolute right-0 mt-2 w-64 rounded-2xl bg-white border border-surface-border shadow-soft-lg p-3 z-50 animate-in fade-in zoom-in-95 text-left">
+              <div className="p-2 border-b border-surface-border mb-2">
+                <div className="text-xs font-bold text-charcoal truncate">
+                  {user?.name || 'Er. R. Sharma'}
+                </div>
+                <div className="text-[11px] text-charcoal-light truncate font-mono">
+                  {user?.email || 'inspector@roadvision.ai'}
+                </div>
+                <div className="mt-1.5 inline-block text-[10px] font-semibold px-2 py-0.5 rounded-full bg-primary-light text-primary-dark">
+                  {user?.role || 'Senior QA/QC Inspector'}
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="w-full flex items-center gap-2 px-3 py-2 text-xs font-medium text-status-error hover:bg-status-error/10 rounded-xl transition-colors"
+              >
+                <LogOut className="w-4 h-4" />
+                <span>Sign Out</span>
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </header>

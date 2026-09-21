@@ -49,6 +49,21 @@ export const SAMPLE_IMAGES = [
     foreignObjects: 'Absent'
   },
   {
+    id: 'sample-coarse-150',
+    title: 'Heavy Boulder / Rip-Rap (150 mm)',
+    category: 'Coarse Aggregate',
+    size: '150 mm – Heavy / Boulder',
+    description: 'Heavy pitching stone and granular sub-base boulder (150 mm) for road embankment and subgrade stabilization.',
+    recommendation: 'Suitable for Use',
+    svg: `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400" viewBox="0 0 600 400"><rect width="600" height="400" fill="%2352525B"/><polygon points="40,50 180,30 220,190 60,210" fill="%2327272A"/><polygon points="260,40 450,20 490,200 280,180" fill="%233F3F46"/><polygon points="80,240 280,210 240,380 50,350" fill="%2318181B"/><polygon points="320,220 540,190 560,370 310,360" fill="%2327272A"/><circle cx="270" cy="180" r="30" fill="%2371717A" opacity="0.4"/><text x="20" y="380" font-family="sans-serif" font-size="16" fill="%23FFFFFF" font-weight="bold">SAMPLE #CA-150MM (HEAVY BOULDER / RIP-RAP)</text></svg>`,
+    qualityScore: 93,
+    confidence: 95.4,
+    condition: 'Clean',
+    moisture: 'Dry',
+    distribution: 'Uniform Size',
+    foreignObjects: 'Absent'
+  },
+  {
     id: 'sample-sand',
     title: 'Fine Aggregate / River Sand',
     category: 'Fine Aggregate / Sand',
@@ -98,7 +113,7 @@ export const SAMPLE_IMAGES = [
 export const MATERIAL_CLASSES = [
   { id: 'cement', name: 'Cement', color: '#6B7280', description: 'Ordinary Portland Cement (OPC 43/53) & PPC binding agent' },
   { id: 'fine_aggregate', name: 'Fine Aggregate / Sand', color: '#D9A441', description: 'Zone II River Sand / Manufactured M-Sand' },
-  { id: 'coarse_aggregate', name: 'Coarse Aggregate', color: '#4A6FA5', description: 'Crushed granite & basalt stone in 10mm, 20mm, 40mm' },
+  { id: 'coarse_aggregate', name: 'Coarse Aggregate', color: '#4A6FA5', description: 'Crushed granite & basalt stone in 10mm, 20mm, 40mm, 150mm' },
   { id: 'bitumen', name: 'Bitumen', color: '#2B2F36', description: 'Viscosity grade VG-10, VG-30, VG-40 paving binder' },
   { id: 'soil', name: 'Soil', color: '#854D0E', description: 'Subgrade filling earth, gravel, and granular sub-base' }
 ];
@@ -106,7 +121,8 @@ export const MATERIAL_CLASSES = [
 export const AGGREGATE_SIZES = [
   { id: '10mm', label: 'Small – 10 mm', code: '10 mm', purpose: 'Surface dressing, chip seals, and micro-surfacing wearing layer' },
   { id: '20mm', label: 'Medium – 20 mm', code: '20 mm', purpose: 'Dense Bituminous Macadam (DBM) and structural pavement courses' },
-  { id: '40mm', label: 'Large – 40 mm', code: '40 mm', purpose: 'Granular Sub-Base (GSB), wet mix macadam, and track ballast' }
+  { id: '40mm', label: 'Large – 40 mm', code: '40 mm', purpose: 'Granular Sub-Base (GSB), wet mix macadam, and track ballast' },
+  { id: '150mm', label: 'Heavy – 150 mm', code: '150 mm', purpose: 'Subgrade boulder, pitching stone, rip-rap & 150 mm lab specimen core' }
 ];
 
 export const QUALITY_CRITERIA = [

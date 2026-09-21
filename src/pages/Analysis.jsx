@@ -38,6 +38,8 @@ export default function Analysis() {
   // States
   const [selectedImage, setSelectedImage] = useState(null);
   const [selectedPresetId, setSelectedPresetId] = useState(null);
+  const [uploadedFileName, setUploadedFileName] = useState('');
+  const [targetSize, setTargetSize] = useState('auto');
   const [isDragging, setIsDragging] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
@@ -65,6 +67,21 @@ export default function Analysis() {
     if (file.size > 10 * 1024 * 1024) {
       setErrorNotice('File size exceeds 10MB limit.');
       return;
+    }
+
+    setUploadedFileName(file.name);
+    // Auto-detect if filename contains 150, 40, 10, or 20
+    const lowerName = file.name.toLowerCase();
+    if (lowerName.includes('150')) {
+      setTargetSize('150 mm');
+    } else if (lowerName.includes('40')) {
+      setTargetSize('40 mm');
+    } else if (lowerName.includes('10')) {
+      setTargetSize('10 mm');
+    } else if (lowerName.includes('20')) {
+      setTargetSize('20 mm');
+    } else {
+      setTargetSize('auto');
     }
 
     const reader = new FileReader();
@@ -102,6 +119,16 @@ export default function Analysis() {
     setErrorNotice(null);
     setSelectedImage(sample.svg);
     setSelectedPresetId(sample.id);
+    setUploadedFileName('');
+    setTargetSize(
+      sample.size.includes('150')
+        ? '150 mm'
+        : sample.size.includes('40')
+        ? '40 mm'
+        : sample.size.includes('10')
+        ? '10 mm'
+        : '20 mm'
+    );
     setAnalysisResult(null);
     setCurrentStep(1);
     setSavedNotification(false);
@@ -118,7 +145,11 @@ export default function Analysis() {
     try {
       const result = await analyzeMaterialImage(
         selectedImage,
-        { sampleId: selectedPresetId },
+        {
+          sampleId: selectedPresetId,
+          fileName: uploadedFileName,
+          selectedSize: targetSize !== 'auto' ? targetSize : undefined,
+        },
         (step, message) => {
           setCurrentStep(step);
           setStepMessage(message);
@@ -137,6 +168,56 @@ export default function Analysis() {
     }
   };
 
+  // Switch / update result aggregate size interactively
+  const handleUpdateResultSize = (newSizeCode) => {
+    if (!analysisResult) return;
+    const is150 = newSizeCode.includes('150');
+    const is40 = newSizeCode.includes('40');
+    const is10 = newSizeCode.includes('10');
+    const is20 = newSizeCode.includes('20');
+
+    let newSize = newSizeCode;
+    let newCategory = 'Graded Matrix';
+    let newStandard = analysisResult.standard;
+    let newNotes = analysisResult.notes;
+
+    if (is150) {
+      newSize = '150 mm – Heavy / Boulder';
+      newCategory = 'Heavy / Boulder (150 mm)';
+      newStandard = 'MoRTH Section 300 / IRC:75-2015';
+      newNotes =
+        '150 mm heavy pitching aggregate / subgrade boulder conforms to MoRTH Section 300 & IRC:75 compaction and rock fill standards.';
+    } else if (is40) {
+      newSize = '40 mm – Large';
+      newCategory = 'Large (40 mm)';
+      newStandard = 'MoRTH Section 400 / IRC:109';
+      newNotes =
+        '40 mm ballast aggregate conforms to Granular Sub-Base (GSB) and Wet Mix Macadam (WMM) specifications.';
+    } else if (is10) {
+      newSize = '10 mm – Small';
+      newCategory = 'Small (10 mm)';
+      newStandard = 'MoRTH Section 500 / IRC:110';
+      newNotes =
+        '10 mm chipping stone conforms to surface dressing, chip seal, and micro-surfacing wearing layer requirements.';
+    } else if (is20) {
+      newSize = '20 mm – Medium';
+      newCategory = 'Medium (20 mm)';
+      newStandard = 'MoRTH Section 500 / IRC:111-2009';
+      newNotes =
+        '20 mm aggregate gradation conforms to Dense Bituminous Macadam (DBM) and asphaltic concrete limits.';
+    }
+
+    const updated = {
+      ...analysisResult,
+      size: newSize,
+      sizeCategory: newCategory,
+      standard: newStandard,
+      notes: newNotes,
+    };
+    setAnalysisResult(updated);
+    saveAnalysis(updated);
+  };
+
   // Save explicitly
   const handleSaveExplicitly = () => {
     if (analysisResult) {
@@ -149,6 +230,8 @@ export default function Analysis() {
   const handleReset = () => {
     setSelectedImage(null);
     setSelectedPresetId(null);
+    setUploadedFileName('');
+    setTargetSize('auto');
     setAnalysisResult(null);
     setCurrentStep(1);
     setErrorNotice(null);
@@ -340,20 +423,61 @@ export default function Analysis() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="p-3.5 rounded-xl bg-surface-muted text-xs text-charcoal-muted leading-relaxed space-y-1.5">
+              <div className="p-3.5 rounded-xl bg-surface-muted text-xs text-charcoal-muted leading-relaxed space-y-2">
                 <div className="flex items-center justify-between font-semibold text-charcoal">
                   <span>Inspection Protocol:</span>
-                  <span>MoRTH Section 500</span>
+                  <span>{targetSize === '150 mm' ? 'MoRTH Section 300 / IRC:75' : 'MoRTH Section 500'}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span>Selected Sample:</span>
-                  <span className="font-mono text-charcoal">
-                    {selectedPresetId ? selectedPresetId : selectedImage ? 'Custom Upload' : 'None Selected'}
+                  <span className="font-mono text-charcoal truncate max-w-[180px]">
+                    {selectedPresetId ? selectedPresetId : uploadedFileName ? uploadedFileName : selectedImage ? 'Custom Upload' : 'None Selected'}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span>Pipeline State:</span>
                   <span className="text-primary font-medium">{stepMessage}</span>
+                </div>
+
+                {/* Target Specimen / Sieve Size Selector */}
+                <div className="pt-2 border-t border-surface-border/60">
+                  <div className="flex items-center justify-between text-xs mb-1.5">
+                    <span className="font-semibold text-charcoal">
+                      Target / Calibrated Size:
+                    </span>
+                    {targetSize === '150 mm' && (
+                      <span className="text-[10px] bg-primary/10 text-primary font-bold px-1.5 py-0.5 rounded">
+                        150 mm Selected
+                      </span>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-5 gap-1.5 text-[11px]">
+                    {[
+                      { id: 'auto', label: 'Auto' },
+                      { id: '10 mm', label: '10 mm' },
+                      { id: '20 mm', label: '20 mm' },
+                      { id: '40 mm', label: '40 mm' },
+                      { id: '150 mm', label: '150 mm' },
+                    ].map((sz) => (
+                      <button
+                        key={sz.id}
+                        type="button"
+                        onClick={() => setTargetSize(sz.id)}
+                        className={`py-1.5 px-1 rounded-lg border text-center font-medium transition-all ${
+                          targetSize === sz.id
+                            ? 'bg-primary text-white border-primary shadow-soft-sm font-bold'
+                            : 'bg-white text-charcoal border-surface-border hover:bg-gray-50'
+                        }`}
+                      >
+                        {sz.label}
+                      </button>
+                    ))}
+                  </div>
+                  {targetSize === '150 mm' && (
+                    <p className="text-[10px] text-primary mt-1.5 font-medium">
+                      ✓ Specimen size calibrated for 150 mm Heavy Boulder / Rip-Rap / Lab Core
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -421,10 +545,19 @@ export default function Analysis() {
 
                 {/* Aggregate Size */}
                 <div className="pt-2 border-t border-surface-border">
-                  <span className="text-xs font-medium text-charcoal-light block mb-2">
-                    Aggregate Size Classification
-                  </span>
-                  <AggregateSizeSelector selectedSize={analysisResult.size} />
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-medium text-charcoal-light">
+                      Aggregate Size Classification
+                    </span>
+                    <span className="text-[10px] text-primary font-semibold">
+                      Click to switch / correct
+                    </span>
+                  </div>
+                  <AggregateSizeSelector
+                    selectedSize={analysisResult.size}
+                    interactive={true}
+                    onSelectSize={handleUpdateResultSize}
+                  />
                 </div>
 
                 {/* Visual Indicators */}

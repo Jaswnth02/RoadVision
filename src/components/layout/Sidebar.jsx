@@ -1,5 +1,5 @@
 import React from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
   ScanSearch,
@@ -11,7 +11,9 @@ import {
   ShieldCheck,
   Layers,
   Sparkles,
+  LogOut,
 } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 
 const NAV_ITEMS = [
   { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -24,6 +26,14 @@ const NAV_ITEMS = [
 ];
 
 export default function Sidebar({ onCloseMobile }) {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    if (onCloseMobile) onCloseMobile();
+    logout();
+    navigate('/login');
+  };
   return (
     <aside className="w-64 bg-white border-r border-surface-border flex flex-col h-full flex-shrink-0 select-none">
       {/* Brand Header */}
@@ -91,6 +101,33 @@ export default function Sidebar({ onCloseMobile }) {
         <p className="text-[11px] text-charcoal-light leading-relaxed">
           Automated aggregate sieve and quality compliance monitoring.
         </p>
+      </div>
+
+      {/* User Session Info & Logout in Sidebar */}
+      <div className="p-3 mx-3 mb-2 rounded-xl bg-surface-subtle border border-surface-border flex items-center justify-between">
+        <div className="flex items-center gap-2 overflow-hidden">
+          <div className="w-8 h-8 rounded-full bg-primary/15 border border-primary/30 flex items-center justify-center text-xs font-bold text-primary flex-shrink-0">
+            {user?.initials || 'QA'}
+          </div>
+          <div className="text-left overflow-hidden">
+            <span className="text-xs font-bold text-charcoal block truncate">
+              {user?.name || 'Er. R. Sharma'}
+            </span>
+            <span className="text-[10px] text-charcoal-light block truncate">
+              {user?.role || 'Senior QA/QC'}
+            </span>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={handleLogout}
+          className="p-1.5 rounded-lg text-charcoal-light hover:text-status-error hover:bg-status-error/10 transition-colors"
+          title="Sign Out"
+          aria-label="Sign Out"
+        >
+          <LogOut className="w-4 h-4" />
+        </button>
       </div>
 
       {/* System Status Footer */}

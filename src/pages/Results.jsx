@@ -69,6 +69,54 @@ export default function Results() {
     setTimeout(() => setSavedAlert(false), 3500);
   };
 
+  const handleUpdateResultSize = (newSizeCode) => {
+    const is150 = newSizeCode.includes('150');
+    const is40 = newSizeCode.includes('40');
+    const is10 = newSizeCode.includes('10');
+    const is20 = newSizeCode.includes('20');
+
+    let newSize = newSizeCode;
+    let newCategory = 'Graded Matrix';
+    let newStandard = result.standard;
+    let newNotes = result.notes;
+
+    if (is150) {
+      newSize = '150 mm – Heavy / Boulder';
+      newCategory = 'Heavy / Boulder (150 mm)';
+      newStandard = 'MoRTH Section 300 / IRC:75-2015';
+      newNotes =
+        '150 mm heavy pitching aggregate / subgrade boulder conforms to MoRTH Section 300 & IRC:75 compaction and rock fill standards.';
+    } else if (is40) {
+      newSize = '40 mm – Large';
+      newCategory = 'Large (40 mm)';
+      newStandard = 'MoRTH Section 400 / IRC:109';
+      newNotes =
+        '40 mm ballast aggregate conforms to Granular Sub-Base (GSB) and Wet Mix Macadam (WMM) specifications.';
+    } else if (is10) {
+      newSize = '10 mm – Small';
+      newCategory = 'Small (10 mm)';
+      newStandard = 'MoRTH Section 500 / IRC:110';
+      newNotes =
+        '10 mm chipping stone conforms to surface dressing, chip seal, and micro-surfacing wearing layer requirements.';
+    } else if (is20) {
+      newSize = '20 mm – Medium';
+      newCategory = 'Medium (20 mm)';
+      newStandard = 'MoRTH Section 500 / IRC:111-2009';
+      newNotes =
+        '20 mm aggregate gradation conforms to Dense Bituminous Macadam (DBM) and asphaltic concrete limits.';
+    }
+
+    const updated = {
+      ...result,
+      size: newSize,
+      sizeCategory: newCategory,
+      standard: newStandard,
+      notes: newNotes,
+    };
+    setResult(updated);
+    saveAnalysis(updated);
+  };
+
   const isSuitable = result.recommendation?.toLowerCase().includes('suitable') && !result.recommendation?.toLowerCase().includes('not');
 
   return (
@@ -260,7 +308,19 @@ export default function Results() {
               <Badge variant="neutral" size="sm">Sieve Gradation</Badge>
             </CardHeader>
             <CardContent>
-              <AggregateSizeSelector selectedSize={result.size} />
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs text-charcoal-light">
+                  Select sieve / boulder specification to calibrate test record:
+                </span>
+                <span className="text-[10px] text-primary font-semibold">
+                  Click to switch
+                </span>
+              </div>
+              <AggregateSizeSelector
+                selectedSize={result.size}
+                interactive={true}
+                onSelectSize={handleUpdateResultSize}
+              />
             </CardContent>
           </Card>
 

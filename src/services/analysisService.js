@@ -152,7 +152,15 @@ export async function analyzeMaterialImage(imagePayload, options = {}, onStepPro
       confidence: sampleMatch.confidence,
       confidenceDecimal: (sampleMatch.confidence / 100).toFixed(3),
       size: sampleMatch.size,
-      sizeCategory: sampleMatch.size.includes('10') ? 'Small (10 mm)' : sampleMatch.size.includes('20') ? 'Medium (20 mm)' : sampleMatch.size.includes('40') ? 'Large (40 mm)' : 'Graded Matrix',
+      sizeCategory: sampleMatch.size.includes('10')
+        ? 'Small (10 mm)'
+        : sampleMatch.size.includes('20')
+        ? 'Medium (20 mm)'
+        : sampleMatch.size.includes('40')
+        ? 'Large (40 mm)'
+        : sampleMatch.size.includes('150')
+        ? 'Heavy / Boulder (150 mm)'
+        : 'Graded Matrix',
       condition: sampleMatch.condition,
       moisture: sampleMatch.moisture,
       distribution: sampleMatch.distribution,
@@ -162,7 +170,7 @@ export async function analyzeMaterialImage(imagePayload, options = {}, onStepPro
       batchNo: `BATCH-CV-${randomSuffix}`,
       inspector: 'Er. R. Sharma (QA/QC Lead)',
       location: 'Field Laboratory Km 142+500',
-      standard: 'MoRTH Section 500 / IRC:111-2009',
+      standard: sampleMatch.size.includes('150') ? 'MoRTH Section 300 / IRC:75-2015' : 'MoRTH Section 500 / IRC:111-2009',
       notes: isSuitable
         ? 'Aggregate gradation conforms to specification limits. Flakiness index and moisture within allowable thresholds.'
         : isReview
@@ -173,21 +181,66 @@ export async function analyzeMaterialImage(imagePayload, options = {}, onStepPro
     };
   }
 
-  // Generic upload fallback
+  // Generic upload fallback - intelligent resolution based on selected size or uploaded filename
+  const targetSizeInput = options.selectedSize || '';
+  const fileName = options.fileName || '';
+  const is150 = targetSizeInput.includes('150') || /150\s*mm|150/i.test(fileName);
+  const is40 = targetSizeInput.includes('40') || /40\s*mm|40/i.test(fileName);
+  const is10 = targetSizeInput.includes('10') || /10\s*mm|10/i.test(fileName);
+  const is20 = targetSizeInput.includes('20') || /20\s*mm|20/i.test(fileName);
+
   const isGoodQuality = Math.random() > 0.15;
   const confidenceVal = Number((91 + Math.random() * 7).toFixed(1));
   const qualityScoreVal = isGoodQuality ? Math.floor(88 + Math.random() * 9) : Math.floor(55 + Math.random() * 20);
+
+  let detectedSize = '20 mm – Medium';
+  let sizeCategory = 'Medium (20 mm)';
+  let standard = 'MoRTH Section 500 / IRC:111-2009';
+  let specificNotes = isGoodQuality
+    ? 'Vision model confirmed angular crushed aggregate structure with uniform distribution and zero foreign debris.'
+    : 'Visual quality check failed due to moisture saturation and fine silt dust coating.';
+
+  if (is150) {
+    detectedSize = '150 mm – Heavy / Boulder';
+    sizeCategory = 'Heavy / Boulder (150 mm)';
+    standard = 'MoRTH Section 300 / IRC:75-2015';
+    specificNotes = isGoodQuality
+      ? '150 mm heavy pitching aggregate / subgrade boulder conforms to MoRTH Section 300 & IRC:75 compaction and rock fill standards.'
+      : 'Oversized 150 mm stone shows non-uniform fracture planes and excess moisture. Review per IRC:75.';
+  } else if (is40) {
+    detectedSize = '40 mm – Large';
+    sizeCategory = 'Large (40 mm)';
+    standard = 'MoRTH Section 400 / IRC:109';
+    specificNotes = isGoodQuality
+      ? '40 mm ballast aggregate conforms to Granular Sub-Base (GSB) and Wet Mix Macadam (WMM) specifications.'
+      : '40 mm sample exhibits surface dust coating and mixed gradation.';
+  } else if (is10) {
+    detectedSize = '10 mm – Small';
+    sizeCategory = 'Small (10 mm)';
+    standard = 'MoRTH Section 500 / IRC:110';
+    specificNotes = isGoodQuality
+      ? '10 mm chipping stone conforms to surface dressing, chip seal, and micro-surfacing wearing layer requirements.'
+      : 'Excessive fines and moisture detected on 10 mm chipping stone.';
+  } else if (is20) {
+    detectedSize = '20 mm – Medium';
+    sizeCategory = 'Medium (20 mm)';
+    standard = 'MoRTH Section 500 / IRC:111-2009';
+    specificNotes = isGoodQuality
+      ? '20 mm aggregate gradation conforms to Dense Bituminous Macadam (DBM) and asphaltic concrete limits.'
+      : '20 mm aggregate shows irregular flakiness and moisture saturation.';
+  }
 
   return {
     id: `INS-2026-${randomSuffix}`,
     timestamp: `${dateFormatted} ${timeFormatted}`,
     date: dateFormatted,
     time: timeFormatted,
+    fileName: options.fileName || null,
     material: 'Coarse Aggregate',
     confidence: confidenceVal,
     confidenceDecimal: (confidenceVal / 100).toFixed(3),
-    size: '20 mm – Medium',
-    sizeCategory: 'Medium (20 mm)',
+    size: detectedSize,
+    sizeCategory: sizeCategory,
     condition: isGoodQuality ? 'Clean' : 'Dusty',
     moisture: isGoodQuality ? 'Dry' : 'Wet',
     distribution: isGoodQuality ? 'Uniform Size' : 'Mixed Size',
@@ -197,10 +250,8 @@ export async function analyzeMaterialImage(imagePayload, options = {}, onStepPro
     batchNo: `BATCH-CV-${randomSuffix}`,
     inspector: 'Er. R. Sharma (QA/QC Lead)',
     location: 'Field Laboratory Km 142+500',
-    standard: 'MoRTH Section 500 / IRC:111-2009',
-    notes: isGoodQuality
-      ? 'Vision model confirmed angular crushed aggregate structure with uniform distribution and zero foreign debris.'
-      : 'Visual quality check failed due to moisture saturation and fine silt dust coating.',
+    standard: standard,
+    notes: specificNotes,
     imageUrl: imagePayload,
     isDemoPreset: false
   };
